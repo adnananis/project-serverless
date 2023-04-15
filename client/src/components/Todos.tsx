@@ -73,12 +73,24 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     try {
       await deleteTodo(this.props.auth.getIdToken(), todoId)
 
-      //await getTodos(this.props.auth.getIdToken())
-      
+      const todos = await getTodos(this.props.auth.getIdToken())      
+      this.renderLoading()     
+  
+      this.setState({
+        todos,
+        loadingTodos: false
+      })
       return this.renderTodos()
      
     } catch {
-      alert('Todo deletion failed')
+      const todos = await getTodos(this.props.auth.getIdToken())      
+      this.renderLoading()     
+  
+      this.setState({
+        todos,
+        loadingTodos: false
+      })
+      return this.renderTodos()
     }
   }
 
