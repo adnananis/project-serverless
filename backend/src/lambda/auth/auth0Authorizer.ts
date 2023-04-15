@@ -6,8 +6,14 @@ import { JwtPayload } from '../../auth/JwtPayload'
 
 
 const logger = createLogger('auth')
+const AWS = require('aws-sdk');
 
-const secret = process.env.AUTH_0_SECRET
+//const secret = process.env.AUTH_0_SECRET
+
+const secretId = process.env.AUTH_0_SECRET_ID
+const secretField = process.env.AUTH_0_SECRET_FIELD
+
+let cachedSecret:  string
 
 // TODO: Provide a URL that can be used to download a certificate that can be used
 // to verify JWT token signature.
@@ -58,6 +64,9 @@ async function verifyToken(authHeader: string) : Promise<JwtPayload> {
 
   const token = getToken(authHeader)  
 
+  const secretObject: any =  await getSecret()
+  const secret = secretObject[secretField]
+
   return verify(token, secret) as JwtPayload
 
   // TODO: Implement token verification
@@ -77,3 +86,26 @@ function getToken(authHeader: string): string {
 
   return token
 }
+
+
+
+async function getSecret() {
+
+  if (cachedSecret) return cachedSecret
+  // Create a Secrets Manager client
+  const secretsManager = new AWS.SecretsManager();
+
+  // Define parameters for the secret
+  const params = {
+    SecretId: secretId
+  };  
+    // Retrieve the secret from AWS Secrets Manager
+    const secret = await secretsManager.getSecretValue(params).promise();
+
+    cachedSecret = secret.SecretString
+    return JSON.parse(cachedSecret);
+  
+};
+
+
+
